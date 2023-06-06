@@ -12,10 +12,15 @@ import java.util.Locale
 
 class LocalRepository(private val logDao: LogDao) {
 
-    private var spans: List<MinuteSpan> =
-        (0..(23 * 60) step 30).map { hour ->
-            MinuteSpan(hour, (hour + 30))
-        }
+    private var spans: List<MinuteSpan>
+
+
+    init {
+        var i = 0
+        spans =
+            (19..23).map { h -> MinuteSpan(h * 60, (h + 1) * 60).apply { this.index = i++ } } +
+                    (0..9).map { h -> MinuteSpan(h * 60, (h + 1) * 60).apply { this.index = i++ } }
+    }
 
     suspend fun notifyDetectedMovement() {
         logDao.add(LogEntry(null, System.currentTimeMillis()))
@@ -34,7 +39,7 @@ class LocalRepository(private val logDao: LogDao) {
                     }
                     .filter { item -> item.minutes >= span.from && item.minutes < span.to }
             }
-            return@map spans
+            return@map spans.sortedBy { it.index }
         }
 
     suspend fun deleteAll() {
